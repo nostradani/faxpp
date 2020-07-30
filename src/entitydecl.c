@@ -17,6 +17,9 @@
 #include "tokenizer_states.h"
 #include "char_classes.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 #define SINGLE_CHAR_STATE(name, ch, next_stored_state, next_state, error) \
 FAXPP_Error \
 name(FAXPP_TokenizerEnv *env) \
@@ -588,3 +591,4 @@ paramentitydecl_end_state(FAXPP_TokenizerEnv *env)
   return NO_ERROR;
 }
 
+#pragma clang diagnostic pop

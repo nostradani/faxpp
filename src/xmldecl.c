@@ -18,6 +18,9 @@
 #include "char_classes.h"
 #include "xml_parser.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 FAXPP_Error
 xml_decl_or_markup_state(FAXPP_TokenizerEnv *env)
 {
@@ -787,3 +790,4 @@ xml_decl_seen_question_state(FAXPP_TokenizerEnv *env)
   return NO_ERROR;
 }
 
+#pragma clang diagnostic pop

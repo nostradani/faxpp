@@ -19,6 +19,9 @@
 
 #include "buffer.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 FAXPP_Error FAXPP_init_buffer(FAXPP_Buffer *buffer, unsigned int initialSize,
                               FAXPP_BufferResizeCallback callback, void *userData)
 {
@@ -120,3 +123,4 @@ FAXPP_Error FAXPP_buffer_append_ch(FAXPP_Buffer *buffer, FAXPP_EncodeFunction en
   return NO_ERROR;
 }
 
+#pragma clang diagnostic pop

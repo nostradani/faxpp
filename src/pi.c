@@ -17,6 +17,9 @@
 #include "tokenizer_states.h"
 #include "char_classes.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 FAXPP_Error
 pi_name_start_state(FAXPP_TokenizerEnv *env)
 {
@@ -198,3 +201,4 @@ pi_content_seen_question_state(FAXPP_TokenizerEnv *env)
   return NO_ERROR;
 }
 
+#pragma clang diagnostic pop

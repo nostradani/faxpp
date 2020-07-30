@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+
+
 #ifndef __FAXPP__PARSER_H
 #define __FAXPP__PARSER_H
 
@@ -544,3 +548,5 @@ unsigned int FAXPP_get_error_column(const FAXPP_Parser *parser);
  */
 
 #endif
+
+#pragma clang diagnostic pop

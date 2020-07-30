@@ -40,6 +40,9 @@ name(FAXPP_TokenizerEnv *env) \
 
 #define SINGLE_CHAR_STATE(name, ch, next_stored_state, next_state, error) SINGLE_CHAR_STATE_RETURN(name, ch, next_stored_state, next_state, error, NO_TOKEN)
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 SINGLE_CHAR_STATE(attlistdecl_initial_state1, 'T', 0, attlistdecl_initial_state2, INVALID_DTD_DECL)
 SINGLE_CHAR_STATE(attlistdecl_initial_state2, 'T', 0, attlistdecl_initial_state3, INVALID_DTD_DECL)
 SINGLE_CHAR_STATE(attlistdecl_initial_state3, 'L', 0, attlistdecl_initial_state4, INVALID_DTD_DECL)
@@ -1215,4 +1218,4 @@ attlistdecl_attvalue_quot_state(FAXPP_TokenizerEnv *env)
   return NO_ERROR;
 }
 
-
+#pragma clang diagnostic pop

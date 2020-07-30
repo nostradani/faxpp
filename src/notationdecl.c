@@ -73,7 +73,10 @@ notationdecl_name_state2(FAXPP_TokenizerEnv *env)
     WHITESPACE:
       env->stored_state = notationdecl_content_state;
       env->state = ws_state;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
       token_end_position(env);
+#pragma clang diagnostic pop
       report_token(NOTATIONDECL_NAME_TOKEN, env);
       next_char(env);
       return NO_ERROR;

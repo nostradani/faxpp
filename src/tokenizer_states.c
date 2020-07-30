@@ -17,6 +17,9 @@
 #include "tokenizer_states.h"
 #include "char_classes.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 #ifdef DEBUG
 const char *FAXPP_state_to_string(FAXPP_StateFunction state)
 {
@@ -1368,3 +1371,4 @@ end_of_buffer_state(FAXPP_TokenizerEnv *env)
 #undef END_CHECK_IF
 #undef PREFIX
 
+#pragma clang diagnostic pop

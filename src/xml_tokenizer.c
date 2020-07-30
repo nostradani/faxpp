@@ -34,6 +34,8 @@
 
 #define SNIFF_NEXT_CHAR(buf) (((buf) < (unsigned char*)env->buffer_end) ? *(buf)++ : 0x100)
 
+void change_token_buffer(void *userData, FAXPP_Buffer *buffer, void *newBuffer);
+
 FAXPP_Error
 FAXPP_sniff_encoding(FAXPP_Tokenizer *env)
 {
@@ -592,7 +594,10 @@ FAXPP_tokenizer_release_buffer(FAXPP_Tokenizer *tokenizer, void **buffer_positio
     // Find the length of the partial token
     unsigned int token_length = tokenizer->token.value.len;
     if(!token_length)
-      token_length = tokenizer->position - tokenizer->token.value.ptr;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+        token_length = tokenizer->position - tokenizer->token.value.ptr;
+#pragma clang diagnostic pop
 
     // Re-position the token positions to point into the token_buffer
     FAXPP_reset_buffer(&tokenizer->token_buffer);

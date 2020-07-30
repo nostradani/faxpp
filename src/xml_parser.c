@@ -33,6 +33,10 @@
 #define INITIAL_ENTITY_BUFFER_SIZE 256
 #define INITIAL_ELEMENT_INFO_BUFFER_SIZE 256
 
+
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 static FAXPP_Error nc_start_document_next_event(FAXPP_ParserEnv *env);
 static FAXPP_Error nc_dtd_next_event(FAXPP_ParserEnv *env);
 static FAXPP_Error nc_next_event(FAXPP_ParserEnv *env);
@@ -42,6 +46,8 @@ static FAXPP_Error wf_next_event(FAXPP_ParserEnv *env);
 
 static void p_change_event_buffer(void *userData, FAXPP_Buffer *buffer, void *newBuffer);
 static void p_change_entity_buffer(void *userData, FAXPP_Buffer *buffer, void *newBuffer);
+
+FAXPP_Error p_normalize_attr_value(FAXPP_Text *text, FAXPP_Buffer *buffer, const FAXPP_AttrValue *value, const FAXPP_ParserEnv *env);
 
 FAXPP_Parser *FAXPP_create_parser(FAXPP_ParseMode mode, FAXPP_Transcoder encode)
 {
@@ -343,7 +349,7 @@ FAXPP_Error FAXPP_init_parse_callback(FAXPP_Parser *env, FAXPP_ReadCallback call
 
 FAXPP_Error FAXPP_parse_external_entity(FAXPP_Parser *env, FAXPP_EntityType type, void *buffer, unsigned int length, unsigned int done)
 {
-  FAXPP_Error err = FAXPP_push_entity_tokenizer(&env->tenv, type, /*internal_buffer*/0, buffer, length, done);
+  FAXPP_Error err = FAXPP_push_entity_tokenizer(&env->tenv, (FAXPP_EntityParseState)type, /*internal_buffer*/0, buffer, length, done);
   if(err != 0) return err;
 
   // Associate it with the relevent FAXPP_EntityInfo object
@@ -364,7 +370,7 @@ FAXPP_Error FAXPP_parse_external_entity_file(FAXPP_Parser *env, FAXPP_EntityType
 
 FAXPP_Error FAXPP_parse_external_entity_callback(FAXPP_Parser *env, FAXPP_EntityType type, FAXPP_ReadCallback callback, void *userData)
 {
-  FAXPP_Error err = FAXPP_push_entity_tokenizer(&env->tenv, type, /*internal_buffer*/0, 0, 0, 0);
+  FAXPP_Error err = FAXPP_push_entity_tokenizer(&env->tenv, (FAXPP_EntityParseState)type, /*internal_buffer*/0, 0, 0, 0);
   if(err != 0) return err;
 
   err = p_allocate_buffer(env);
@@ -627,22 +633,6 @@ FAXPP_Error FAXPP_continue_parse(FAXPP_Parser *env, void *buffer,
 /* static void p_print_token(FAXPP_ParserEnv *env) */
 /* { */
 /*   char buf[BUF_SIZE + 1]; */
-
-/*   if(env->tenv->base_uri.ptr != 0) { */
-/*     if(env->tenv->base_uri.len > BUF_SIZE) { */
-/*       strncpy(buf + 3, env->tenv->base_uri.ptr + env->tenv->base_uri.len - BUF_SIZE + 3, BUF_SIZE - 3); */
-/*       buf[0] = '.'; */
-/*       buf[1] = '.'; */
-/*       buf[2] = '.'; */
-/*       buf[BUF_SIZE] = 0; */
-/*     } */
-/*     else { */
-/*       strncpy(buf, env->tenv->base_uri.ptr, env->tenv->base_uri.len); */
-/*       buf[env->tenv->result_token.value.len] = 0; */
-/*     } */
-/*     printf("%s", buf); */
-/*   } */
-
 /*   if(env->tenv->result_token.value.ptr != 0) { */
 /*     if(env->tenv->result_token.value.len > BUF_SIZE) { */
 /*       strncpy(buf, env->tenv->result_token.value.ptr, BUF_SIZE - 3); */
@@ -655,11 +645,11 @@ FAXPP_Error FAXPP_continue_parse(FAXPP_Parser *env, void *buffer,
 /*       strncpy(buf, env->tenv->result_token.value.ptr, env->tenv->result_token.value.len); */
 /*       buf[env->tenv->result_token.value.len] = 0; */
 /*     } */
-/*     printf(":%03d:%03d Token ID: %s, Token: \"%s\"\n", env->tenv->result_token.line, */
+/*     printf("%03d:%03d Token ID: %s, Token: \"%s\"\n", env->tenv->result_token.line, */
 /*            env->tenv->result_token.column, FAXPP_token_to_string(env->tenv->result_token.type), buf); */
 /*   } */
 /*   else { */
-/*     printf(":%03d:%03d Token ID: %s\n", env->tenv->result_token.line, env->tenv->result_token.column, */
+/*     printf("%03d:%03d Token ID: %s\n", env->tenv->result_token.line, env->tenv->result_token.column, */
 /*            FAXPP_token_to_string(env->tenv->result_token.type)); */
 /*   } */
 /* } */
@@ -675,7 +665,7 @@ FAXPP_Error FAXPP_continue_parse(FAXPP_Parser *env, void *buffer,
       (err) = (env)->tenv->state((env)->tenv); \
       p_check_err((err), (env)); \
     } \
-    /* p_print_token(env); */ \
+/*     p_print_token(env); */ \
   } \
 }
 
@@ -994,8 +984,7 @@ static FAXPP_Error p_read_more(FAXPP_ParserEnv *env)
       env->event.type = END_EXTERNAL_ENTITY_EVENT;
     }
     else if(env->tenv->external_subset) {
-      if(env->tenv->prev->internal_subset ||
-         env->tenv->prev->external_subset) {
+      if(env->tenv->prev->internal_subset) {
         env->next_event = nc_dtd_next_event;
       }
       else {
@@ -1036,11 +1025,11 @@ static int p_case_insensitive_equals(const char *str, FAXPP_EncodeFunction encod
     if(text_ptr >= text_end) return 0;
 
     encode_len = encode(encode_buffer, encode_buffer + sizeof(encode_buffer), *str);
-    if((text_end - text_ptr) < encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0) {
+    if((text_end - text_ptr) < (int)encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0) {
       if(*str >= 'A' && *str <= 'Z') {
         // Try the lower case letter as well
         encode_len = encode(encode_buffer, encode_buffer + sizeof(encode_buffer), (*str) - 'A' + 'a');
-        if((text_end - text_ptr) < encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0)
+        if((text_end - text_ptr) < (int)encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0)
           return 0;
       }
       else return 0;
@@ -1066,7 +1055,7 @@ static int p_equals(const char *str, FAXPP_EncodeFunction encode, const FAXPP_Te
     if(text_ptr >= text_end) return 0;
 
     encode_len = encode(encode_buffer, encode_buffer + sizeof(encode_buffer), *str);
-    if((text_end - text_ptr) < encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0) {
+    if((text_end - text_ptr) < (int)encode_len || memcmp(encode_buffer, text_ptr, encode_len) != 0) {
       return 0;
     }
 
@@ -1182,18 +1171,17 @@ static FAXPP_Error nc_start_document_next_event(FAXPP_ParserEnv *env)
       return NO_ERROR;
     default:
       env->tenv->buffered_token = 1;
+      p_reset_event(env);
 
       if(env->tenv->external_subset || env->tenv->external_in_markup_entity) {
         // TBD event for start of external subset - jpcs
         env->next_event = nc_dtd_next_event;
       }
       else if(env->tenv->external_parsed_entity) {
-        p_reset_event(env);
         env->event.type = START_EXTERNAL_ENTITY_EVENT;
         env->next_event = env->main_next_event;
       }
       else {
-        p_reset_event(env);
         env->event.type = START_DOCUMENT_EVENT;
         env->next_event = env->main_next_event;
       }
@@ -1342,17 +1330,18 @@ static FAXPP_Error p_parse_external_entity(FAXPP_ParserEnv *env, FAXPP_EntityInf
 static FAXPP_Error p_parse_entity_impl(FAXPP_ParserEnv *env, FAXPP_EntityInfo *ent, FAXPP_EntityParseState state, FAXPP_EntityInfo **initial_entity)
 {
   FAXPP_Error err;
-
+    
   if(ent->external) {
+    FAXPP_EntityType state2 = 0;
     switch(state) {
-    case ELEMENT_CONTENT_ENTITY: state = EXTERNAL_PARSED_ENTITY; break;
-    case INTERNAL_DTD_ENTITY: state = EXTERNAL_SUBSET_ENTITY; break;
-    case EXTERNAL_DTD_ENTITY: state = EXTERNAL_SUBSET_ENTITY; break;
-    case IN_MARKUP_ENTITY: state = EXTERNAL_IN_MARKUP_ENTITY; break;
+    case ELEMENT_CONTENT_ENTITY: state2 = EXTERNAL_PARSED_ENTITY; break;
+    case INTERNAL_DTD_ENTITY: state2 = EXTERNAL_SUBSET_ENTITY; break;
+    case EXTERNAL_DTD_ENTITY: state2 = EXTERNAL_SUBSET_ENTITY; break;
+    case IN_MARKUP_ENTITY: state2 = EXTERNAL_IN_MARKUP_ENTITY; break;
     default: break;
     }
 
-    err = p_parse_external_entity(env, ent, state);
+    err = p_parse_external_entity(env, ent, state2);
     if(err) return err;
 
     // Set the entity on the first new tokenizer
@@ -1402,15 +1391,17 @@ static FAXPP_Error p_parse_entity(FAXPP_ParserEnv *env, FAXPP_EntityInfo *ent, F
   }
 
   if(ent->external) {
+      
+    FAXPP_EntityType state2 = 0;
     switch(state) {
-    case ELEMENT_CONTENT_ENTITY: state = EXTERNAL_PARSED_ENTITY; break;
-    case INTERNAL_DTD_ENTITY: state = EXTERNAL_SUBSET_ENTITY; break;
-    case EXTERNAL_DTD_ENTITY: state = EXTERNAL_SUBSET_ENTITY; break;
-    case IN_MARKUP_ENTITY: state = EXTERNAL_IN_MARKUP_ENTITY; break;
+    case ELEMENT_CONTENT_ENTITY: state2 = EXTERNAL_PARSED_ENTITY; break;
+    case INTERNAL_DTD_ENTITY: state2 = EXTERNAL_SUBSET_ENTITY; break;
+    case EXTERNAL_DTD_ENTITY: state2 = EXTERNAL_SUBSET_ENTITY; break;
+    case IN_MARKUP_ENTITY: state2 = EXTERNAL_IN_MARKUP_ENTITY; break;
     default: break;
     }
 
-    err = p_parse_external_entity(env, ent, state);
+    err = p_parse_external_entity(env, ent, state2);
     if(err) return err;
   }
   else {
@@ -2330,7 +2321,7 @@ static void p_pop_element(FAXPP_ParserEnv *env)
 
 static FAXPP_Error wf_next_event(FAXPP_ParserEnv *env)
 {
-  int i, j;
+  unsigned int i, j;
   FAXPP_Attribute *attr, *attr2;
   FAXPP_Text tmpText;
 
@@ -2468,3 +2459,4 @@ static FAXPP_Error wf_next_event(FAXPP_ParserEnv *env)
   return err;
 }
 
+#pragma clang diagnostic pop

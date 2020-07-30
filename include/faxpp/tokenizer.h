@@ -21,6 +21,9 @@
 #include "transcode.h"
 #include "token.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+
 /**
  * \struct FAXPP_Tokenizer
  * The tokenizer structure. Details of the structure are private.
@@ -208,3 +211,5 @@ unsigned int FAXPP_get_tokenizer_error_column(const FAXPP_Tokenizer *tokenizer);
  */
 
 #endif
+
+#pragma clang diagnostic pop

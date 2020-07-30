@@ -217,7 +217,10 @@ cdata_end_state2(FAXPP_TokenizerEnv *env)
   case '>':
     base_state(env);
     env->token_buffer.cursor = 0;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
     env->token.value.len = env->token_position2 - env->token.value.ptr;
+#pragma clang diagnostic pop
     report_token(CDATA_TOKEN, env);
     next_char(env);
     token_start_position(env);

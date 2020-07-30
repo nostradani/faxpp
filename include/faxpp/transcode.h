@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+
 #ifndef __FAXPP__TRANSCODE_H
 #define __FAXPP__TRANSCODE_H
 
@@ -303,3 +306,5 @@ unsigned int FAXPP_utf8_encode(void *buffer, void *buffer_end, Char32 ch);
 unsigned int FAXPP_utf16_native_encode(void *buffer, void *buffer_end, Char32 ch);
 
 #endif
+
+#pragma clang diagnostic pop

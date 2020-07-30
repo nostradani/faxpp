@@ -17,6 +17,8 @@
 #include <faxpp/event.h>
 
 #ifdef DEBUG
+const char * event_to_string(FAXPP_EventType type);
+
 const char *
 event_to_string(FAXPP_EventType type)
 {

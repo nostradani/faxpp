@@ -988,6 +988,8 @@ uint8_t FAXPP_char_flags_impl(Char32 c)
   unsigned int min, max, middle, result;
   int cmp;
 
+  result = 0;
+    
   // Binary search in the char_classes table
   min = 0;
   max = CHAR_CLASSES_SIZE;

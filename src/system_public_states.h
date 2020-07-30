@@ -20,6 +20,9 @@
 // SKIP_SYSTEM_LITERAL
 // ALLOW_PARAMETER_ENTITIES
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+
 #define SP_SINGLE_CHAR_STATE(name, ch, next_stored_state, next_state, error) \
 FAXPP_Error \
 name(FAXPP_TokenizerEnv *env) \
@@ -390,3 +393,5 @@ PREFIX(public_id_ws_state3)(FAXPP_TokenizerEnv *env)
 }
 
 #undef SP_SINGLE_CHAR_STATE
+
+#pragma clang diagnostic pop

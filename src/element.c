@@ -35,7 +35,10 @@ self_closing_element_state(FAXPP_TokenizerEnv *env)
   switch(env->current_char) {
   case '>':
     base_state(env);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
     token_end_position(env);
+#pragma clang diagnostic pop
     report_empty_token(SELF_CLOSING_ELEMENT_TOKEN, env);
     next_char(env);
     token_start_position(env);
